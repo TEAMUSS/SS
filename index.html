@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sudoku Solver 9x9 by TEAM USS</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-image: url('bg.jpg'); /* Ensure this file is in the same directory */
+            background-size: cover; /* Cover the entire background */
+            background-position: center; /* Center the background image */
+            color: black;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh; /* Full viewport height */
+        }
+
+        .container {
+            padding: 20px;
+            max-width: 600px;
+            width: 90%; /* Responsive width */
+            background: rgba(255, 255, 255, 0.7); /* More transparent background */
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        h1, h2 {
+            margin: 0;
+        }
+
+        .sudoku-grid {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 2px;
+            margin: 20px 0;
+        }
+
+        .box {
+            width: 30px;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.5); /* Transparent background */
+            border: 1px solid black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            transition: background 0.3s; /* Smooth background transition */
+        }
+
+        /* Red lines separating 3x3 boxes */
+        .box:nth-child(3n) {
+            border-right: 2px solid red;
+        }
+
+        .box:nth-last-child(n + 73) {
+            border-bottom: 2px solid red;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Sudoku Solver 9x9</h1>
+        <h2>by TEAM USS</h2>
+        <p>Enter the numbers in the Sudoku grid and click "Solve" to get the solution. You can download the result as a JSON file.</p>
+
+        <div class="sudoku-grid" id="sudokuGrid">
+            <!-- Sudoku boxes will be generated here -->
+        </div>
+
+        <button id="solveButton">Solve</button>
+        <button id="downloadButton">Download Result</button>
+    </div>
+
+    <script>
+        const sudokuGrid = document.getElementById('sudokuGrid');
+        const solveButton = document.getElementById('solveButton');
+        const downloadButton = document.getElementById('downloadButton');
+
+        // Initialize the Sudoku grid
+        function createSudokuGrid() {
+            for (let i = 0; i < 81; i++) {
+                const box = document.createElement('input');
+                box.type = 'number';
+                box.className = 'box';
+                box.min = '1';
+                box.max = '9';
+                box.style.textAlign = 'center';
+                box.value = ''; // Initialize with empty value
+                sudokuGrid.appendChild(box);
+            }
+        }
+
+        // Solve the Sudoku puzzle
+        function solveSudoku() {
+            const grid = [];
+            const inputs = document.querySelectorAll('.box');
+
+            for (let i = 0; i < 9; i++) {
+                grid[i] = [];
+                for (let j = 0; j < 9; j++) {
+                    const value = parseInt(inputs[i * 9 + j].value) || 0;
+                    grid[i][j] = value;
+                }
+            }
+
+            if (solve(grid)) {
+                for (let i = 0; i < 9; i++) {
+                    for (let j = 0; j < 9; j++) {
+                        inputs[i * 9 + j].value = grid[i][j] || '';
+                    }
+                }
+            } else {
+                alert('No solution exists');
+            }
+        }
+
+        // Recursive backtracking algorithm to solve the Sudoku puzzle
+        function solve(board) {
+            for (let row = 0; row < 9; row++) {
+                for (let col = 0; col < 9; col++) {
+                    if (board[row][col] === 0) {
+                        for (let num = 1; num <= 9; num++) {
+                            if (isValid(board, row, col, num)) {
+                                board[row][col] = num;
+                                if (solve(board)) return true;
+                                board[row][col] = 0; // backtrack
+                            }
+                        }
+                        return false; // no number can be placed
+                    }
+                }
+            }
+            return true; // puzzle solved
+        }
+
+        function isValid(board, row, col, num) {
+            for (let x = 0; x < 9; x++) {
+                if (board[row][x] === num || board[x][col] === num ||
+                    board[3 * Math.floor(row / 3) + Math.floor(x / 3)][3 * Math.floor(col / 3) + x % 3] === num) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // Download the result as JSON
+        function downloadResult() {
+            const inputs = document.querySelectorAll('.box');
+            const grid = [];
+
+            for (let i = 0; i < 9; i++) {
+                grid[i] = [];
+                for (let j = 0; j < 9; j++) {
+                    grid[i][j] = parseInt(inputs[i * 9 + j].value) || 0;
+                }
+            }
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(grid));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "sudoku_solution.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        // Event listeners
+        solveButton.addEventListener('click', solveSudoku);
+        downloadButton.addEventListener('click', downloadResult);
+
+        // Create the Sudoku grid on page load
+        createSudokuGrid();
+    </script>
+</body>
+</html>
